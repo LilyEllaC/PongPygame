@@ -1,5 +1,5 @@
 import pygame
-
+import math
 pygame.init()
 
 #get font
@@ -97,7 +97,7 @@ class Ball:
         self.xDirect=1
         self.yDirect=-1
         self.ball=pygame.draw.circle(screen, self.colour, (self.posX, self.posY), self.radius)
-        self.ballRect=pygame.Rect(self.posX, self.posY, self.radius*2, self.radius*2)
+        self.ballRect=pygame.Rect(self.posX, self.posY, 14, 14)
         self.firstTime=1
 
     #visual
@@ -243,17 +243,24 @@ def main():
     running=True
 
     #running intro
-    intro(screen)
+    #intro(screen)
 
     #actually creating the sprites
     player1=Paddle(20,HEIGHT//2,10,100,10,BLUE)
     player2=Paddle(WIDTH-30,HEIGHT//2,10,100,10,BLUE)
     ball=Ball(WIDTH//2, HEIGHT//2, 7, 7, RED)
-    colours=[RED, ORANGE, YELLOW, GREEN, LIGHT_BLUE, BLUE, PURPLE]
+    colours=[RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE, MAGENTA]
     #having a small trail of ball behind to look cool
+    #seeing the past locations
+    pastLocationsX=[]
+    pastLocationsY=[]
+    for i in range(0, 14):
+        pastLocationsX.append(0)
+        pastLocationsY.append(0)
+    #creating the followers
     balls=[]
-    for i in range(0,7):
-        balls.append(Ball(WIDTH//2, HEIGHT//2, 7, 7, colours[i]))
+    for i in range(0,14):
+        balls.append(Ball(WIDTH//2, HEIGHT//2, 7-i/2, 7, colours[i%7]))
     
 
     time=0
@@ -305,14 +312,26 @@ def main():
             if timesHit.count("1")>3:
                 timesHit=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
                 power(ball)
+            
+            #checking the following balls
+            for follower in balls:
+                if pygame.Rect.colliderect(follower.getRect(), player.getRect()):
+                    follower.hit()
+
 
         #updating sprites
         player1.update(player1YDirect)
         player2.update(player2YDirect)
         #having the balls actually follow
-        #for i in range(0,7):
-            #follower.x=ball.x
+        for i in range(0,len(balls)):
+            balls[i].posX=pastLocationsX[len(balls)-i-1]
+            balls[i].posY=pastLocationsY[len(balls)-i-1]
         point=ball.update()
+        #updating the list
+        pastLocationsX.append(ball.posX)
+        pastLocationsY.append(ball.posY)
+        pastLocationsX.pop(0)
+        pastLocationsY.pop(0)
 
         #checking score
         if point==-1:
@@ -327,8 +346,8 @@ def main():
         #displaying the sprites
         player1.display()
         player2.display()
-        #for follower in balls:
-            #follower.display()
+        for follower in balls:
+            follower.display()
         ball.display()
 
         #showing scores
