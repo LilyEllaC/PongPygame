@@ -9,6 +9,7 @@ font20=pygame.font.Font('freesansbold.ttf', 20)
 font25=pygame.font.Font('freesansbold.ttf', 25)
 font30=pygame.font.Font('freesansbold.ttf', 30)
 font40=pygame.font.Font('freesansbold.ttf', 40)
+font200=pygame.font.Font('freesansbold.ttf', 200)
 
 #setting colours
 RED=(255,0,0)
@@ -32,7 +33,7 @@ pygame.display.set_caption("Pong")
 #clock framerate
 clock=pygame.time.Clock()
 #please only set FPS to multiples of 30 for the visual of the trailing balls (nothing will actually break, it will just look different)
-FPS=60
+FPS=30
 FPSScaling =  30/FPS
 
 #showing text
@@ -183,13 +184,17 @@ class Ball:
 #reload button
 class Reload(pygame.sprite.Sprite):
     def __init__(self, width, height, posX, posY):
-        self.width=width
-        self.height=height
+        #self.width=width
+        #self.height=height
+        super().__init__()
         self.posX=posX
         self.posY=posY
         image=pygame.image.load("reload.png")
         self.image=pygame.transform.scale(image, (width, height))
         self.rect=self.image.get_rect()
+    def update(self):
+        self.posX=WIDTH//2-50
+        self.posY=450
 
 #having an intro screen
 def intro(screenSurface):
@@ -207,7 +212,7 @@ def intro(screenSurface):
 
 
         #showing title
-        toScreen("PONG", font40, RED, WIDTH//2, 25)
+        toScreen("PONG", font200, RED, WIDTH//2, 100)
 
         #Instructions
         toScreen("This is a 2-4 player game of pong where the ball gets faster everytime",font25,GRAY,WIDTH//2, 200)
@@ -248,16 +253,20 @@ def outro(screenSurface, p1Points, p2Points, running, reloadSign):
             if event.type==pygame.QUIT:
                 running=False
         screenSurface.fill(RED)
-        rect=(WIDTH//2-50, HEIGHT//2-50, 100,100)
-        pygame.draw.rect(screenSurface, colour, rect, 0, 0)
+
+        #showing score
+        toScreen("Player 1: "+str(p1Points), font20, GREEN, 100, 20)
+        toScreen("Player 2: "+str(p2Points), font20, GREEN, 250, 20)
+        #toScreen("Player 3: "+str(p3Points), font20, GREEN, WIDTH-250, 20)
+        #toScreen("Player 4: "+str(p4Points), font20, GREEN, WIDTH-100, 20)
 
         #showing who won
         if p1Points>p2Points:
-            text=font20.render("Player 1 won!", True, BLACK)
+            text=font30.render("Player 1 won!", True, BLACK)
         elif p2Points>p1Points:
-            text=font20.render("Player 2 won!", True, BLACK)
+            text=font30.render("Player 2 won!", True, BLACK)
         else:
-            text=font20.render("It's a tie!", True, BLACK)
+            text=font30.render("It's a tie!", True, BLACK)
         textRect=text.get_rect()
         textRect.center=(WIDTH//2-15,100)
         screen.blit(text, textRect)
@@ -269,16 +278,25 @@ def outro(screenSurface, p1Points, p2Points, running, reloadSign):
         #get mouse coords
         mouseX, mouseY=pygame.mouse.get_pos()
         #see if it is in the right spot
-        if (mouseX<WIDTH//2+50 and mouseX>WIDTH//2-50) and (mouseY<HEIGHT//2+50 and mouseY>HEIGHT//2-50):
+        if (mouseX<WIDTH//2+55 and mouseX>WIDTH//2-55) and (mouseY<HEIGHT//2+55 and mouseY>HEIGHT//2-55):
             rightSpot=True
-            colour=GRAY
+            colour=LIGHT_BLUE
         else:
             rightSpot=False
-            colour=BLACK
+            colour=BLUE
         for event in pygame.event.get():
             if event.type==pygame.MOUSEBUTTONDOWN and rightSpot:
                 replaying=True
+        #button
+        rect=(WIDTH//2-55, HEIGHT//2-55, 110,110)
+        pygame.draw.rect(screenSurface, colour, rect, 0, 0)
+        #getting the reload sign
+        for sign in reloadSign:
+            sign.rect.x=WIDTH//2-50
+            sign.rect.y=HEIGHT//2-50
+        reloadSign.update()
         reloadSign.draw(screen)
+
         pygame.display.flip()
     return replaying
 
@@ -322,9 +340,10 @@ def isNumber(number):
 
 #typing!
 def getNumFollowers():
-    numFollowers="600"
+    numFollowers=""
     running=True
     colour=RED
+    rightSpot=False
     
     #so it can stop
     while running:
@@ -397,13 +416,12 @@ def main():
     player2=Paddle(WIDTH-30,HEIGHT//2,10,100,10,BLUE)
     player3=Paddle(WIDTH//2, HEIGHT-60, 100,10,10,BLUE)
     player4=Paddle(WIDTH//2, 47,100,10,10,BLUE)
-
     ball=Ball(WIDTH//2, HEIGHT//2, 9, 7, BLACK)
-    button=Reload(100,100,WIDTH//2-50, 475)
 
-    #doing stuff to try and draw the reload sign to the board
-    reloadSign=pygame.sprite.Group()
-    #reloadSign.add(button)
+    #sprite group
+    sprites=pygame.sprite.Group()
+    button=Reload(100,100,WIDTH//2-50, 475)
+    sprites.add(button)
 
     #having a small trail of balls behind to look cool
     colours=[RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE, MAGENTA]
@@ -553,7 +571,7 @@ def main():
         ball.display()
 
         #showing scores
-        player1.displayScore("Player 1: ", player1Score, 100, 20, MAGENTA)
+        player1.displayScore("Player 1: ", player1Score, 100, 20, ORANGE)
         player2.displayScore("Player 2: ", player2Score, 250, 20, ORANGE)
         player3.displayScore("Player 3: ", player3Score, WIDTH-250, 20, ORANGE)
         player4.displayScore("Player 4: ", player4Score, WIDTH-100, 20, ORANGE)
@@ -575,7 +593,7 @@ def main():
         clock.tick(FPS)
         #stopping at the end of the time
         if time==FPS*60*2:
-            running=outro(screen, player1Score, player2Score, running, reloadSign)
+            running=outro(screen, player1Score, player2Score, running, sprites)
             #resetting variables
             if running:
                 for i in range(0, numFollowers):
@@ -589,6 +607,9 @@ def main():
                 player2Score=0
                 player3Score=0
                 player4Score=0
+                for i in range(0, numFollowers):
+                    pastLocationsX.append(0)
+                    pastLocationsY.append(0)
 
 
 
