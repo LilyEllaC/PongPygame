@@ -33,7 +33,7 @@ pygame.display.set_caption("Pong")
 #clock framerate
 clock=pygame.time.Clock()
 #please only set FPS to multiples of 30 for the visual of the trailing balls (nothing will actually break, it will just look different)
-FPS=30
+FPS=60
 FPSScaling =  30/FPS
 
 #showing text
@@ -54,6 +54,7 @@ class Paddle:
         self.speed=speed*FPSScaling
         self.colour=colour
         self.playerRect=pygame.Rect(posX, posY, width, height)
+        self.isHorizontal =width>50
 
         #object actually on the screen
         self.player=pygame.draw.rect(screen, self.colour, self.playerRect)
@@ -215,12 +216,14 @@ def intro(screenSurface):
         toScreen("PONG", font200, RED, WIDTH//2, 100)
 
         #Instructions
-        toScreen("This is a 2-4 player game of pong where the ball gets faster everytime",font25,GRAY,WIDTH//2, 200)
-        toScreen("it gets hit until a point is scored. If you hit the ball with the edge", font25, GRAY, WIDTH//2, 226)
-        toScreen("of the paddle it move in a straight line", font25, GRAY, WIDTH//2, 251)
-        toScreen("Keys: w and s for the left paddle, up and down for the right paddle", font25, GRAY, WIDTH//2, 277)
-        toScreen("Keys: a and d for the top paddle, left and right for the bottom paddle", font25, GRAY, WIDTH//2, 303)
-        toScreen("Have fun!", font25, GREEN, WIDTH//2, 328)
+        toScreen("This is a 2 player game of pong where the ball gets faster everytime",font25,GRAY,WIDTH//2, 200)
+        toScreen("it gets hit until a point is scored. A point gets scored when the ball ", font25, GRAY, WIDTH//2, 226)
+        toScreen("hits either the left or right wall.", font25, GRAY, WIDTH//2, 251)
+        toScreen("Use the w and s keys for the left paddle, and the up and down keys for the right paddle", font25, GRAY, WIDTH//2, 277)
+        toScreen("The top and bottom paddles are just for helping score points.", font25, GRAY, WIDTH//2, 303)
+        toScreen("Use the a and d keys for the top paddle (left player)", font25, GRAY, WIDTH//2, 328)
+        toScreen("and the left and right keys for the bottom paddle (right player)", font25, GRAY, WIDTH//2, 354)
+        toScreen("Have fun!", font25, GREEN, WIDTH//2, 380)
 
 
         #showing text
@@ -248,6 +251,7 @@ def intro(screenSurface):
 def outro(screenSurface, p1Points, p2Points, running, reloadSign):
     replaying=False
     colour=BLACK
+    rightSpot=False
     while not replaying and running:
         for event in pygame.event.get():
             if event.type==pygame.QUIT:
@@ -285,8 +289,10 @@ def outro(screenSurface, p1Points, p2Points, running, reloadSign):
             rightSpot=False
             colour=BLUE
         for event in pygame.event.get():
-            if event.type==pygame.MOUSEBUTTONDOWN and rightSpot:
+            if event.type==pygame.MOUSEBUTTONDOWN and (rightSpot or colour==LIGHT_BLUE):
                 replaying=True
+            if event.type==pygame.MOUSEBUTTONDOWN:
+                print("Mouse clicked")
         #button
         rect=(WIDTH//2-55, HEIGHT//2-55, 110,110)
         pygame.draw.rect(screenSurface, colour, rect, 0, 0)
@@ -300,30 +306,25 @@ def outro(screenSurface, p1Points, p2Points, running, reloadSign):
         pygame.display.flip()
     return replaying
 
-#having fun with the hitting with the edge glitch
+#having fun with a glitch that hopefully doesn't even happen anymore
 def power(ball, player, playerList):
     #checks which paddle it is
     if player==playerList[0]:
         ball.xDirect=1
         ball.yDirect=0
-        ball.posX=36
+        ball.posX=player.posX+player.width+ball.radius+1
     elif player==playerList[1]:
         ball.xDirect=-1
         ball.yDirect=0
-        ball.posX=WIDTH-50
+        ball.posX=player.posX-ball.radius-1
     elif player==playerList[2]:
         ball.xDirect=0
         ball.yDirect=-1
-        ball.posY=HEIGHT-66
+        ball.posY=player.posY-ball.radius-1
     elif player==playerList[3]:
         ball.xDirect=0
         ball.yDirect=1
-        ball.posY=80
-
-    #ball.speed=35*FPSScaling
-    #ball.xDirect*=-1
-    #ball.yDirect*=3
-    #ball.x=WIDTH//2
+        ball.posY=player.posY+player.height+ball.radius+1
 
 #checking that it is only numbers
 def isNumber(number):
@@ -338,13 +339,66 @@ def isNumber(number):
     else:
         return False
 
+#creating the balls for the demo
+def createTrails(ball, numFollowers, pastLocationsX, pastLocationsY, colours, balls):
+    #having the amount change when the number changes
+    if (isNumber(numFollowers)):
+        length=len(balls)
+        #adding
+        if int(numFollowers)>length:
+            for i in range(0, int(numFollowers)-length):
+                pastLocationsX.append(0)
+                pastLocationsY.append(0)
+                balls.append(Ball(WIDTH//2, HEIGHT//2, 7-i/(int(numFollowers)/7), 7, colours[i%7]))
+        #removing
+        elif int(numFollowers)<length:
+            for i in range(int(numFollowers), length):
+                pastLocationsX.pop(int(numFollowers))
+                pastLocationsY.pop(int(numFollowers))
+                balls.pop(int(numFollowers))
+    
+    #having the ball move around
+    #top right
+    if ball.posX>WIDTH-20 and ball.posY<20:
+        ball.posX=WIDTH-10
+        ball.xDirect=0
+        ball.yDirect=1
+    #bottom left
+    if ball.posX<20 and ball.posY>HEIGHT-20:
+        ball.xDirect=0
+        ball.yDirect=-1
+        ball.posX=10
+    #bottom right
+    if ball.posY>HEIGHT-20 and ball.posX>WIDTH-20:
+        ball.xDirect=-1
+        ball.yDirect=0
+        ball.posY=HEIGHT-10
+    #top left
+    if ball.posY<20 and ball.posX<20:
+        ball.xDirect=1
+        ball.yDirect=0
+        ball.posY=10
+
+    ball.update()
+    ball.display()
+
 #typing!
 def getNumFollowers():
     numFollowers=""
     running=True
     colour=RED
     rightSpot=False
-    
+    #showing the demo of the balls
+    #creating the main ball
+    ball=Ball(10, 10, 9, 3.5, BLACK)
+    #seeing the past locations
+    pastLocationsX=[]
+    pastLocationsY=[]
+    #creating the followers
+    balls=[]
+    #having the balls follow it just for fun
+    colours=[RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE, MAGENTA]
+
     #so it can stop
     while running:
         #displaying
@@ -356,11 +410,18 @@ def getNumFollowers():
             if event.type==pygame.MOUSEBUTTONDOWN and rightSpot:
                 running=False
             if event.type==pygame.KEYDOWN:
+                #continuing by clicking enter
+                if event.key==pygame.K_RETURN and isNumber(numFollowers):
+                    running=False
                 #actually typing
                 if event.key==pygame.K_BACKSPACE:
                     numFollowers=numFollowers[:-1]
                 else:
                     numFollowers+=event.unicode
+        
+        #creating the balls
+        #createTrails(ball, numFollowers, pastLocationsX, pastLocationsY, colours, balls)
+
         #checking whether it is a number
         if isNumber(numFollowers):
             colour=GREEN
@@ -387,8 +448,11 @@ def getNumFollowers():
         pygame.draw.polygon(screen, BLACK, trianglePoints)
 
         #showing the text
+        toScreen("Fun patterns", font40, BLUE, WIDTH//2-90, 50)
+        toScreen("(Optional)", font25, BLUE, WIDTH//2+110,50)
         toScreen("Please enter the number of mini balls you want following the main ball.", font25, MAGENTA, WIDTH//2, HEIGHT//2-100)
-        toScreen("It can be any number, but it looks the best between 30 and 70. (upwards of 200 is weird, but still fun)", font15, MAGENTA, WIDTH//2, HEIGHT//2-65)
+        toScreen("These balls don't do anything, they just look really cool.", font25, MAGENTA, WIDTH//2, HEIGHT//2-70)
+        toScreen("It can be any number, but it looks the best between 30 and 70. (upwards of 200 is weird, but still fun)", font15, MAGENTA, WIDTH//2, HEIGHT//2-50)
 
         toScreen(numFollowers, font25, RED, WIDTH//2, HEIGHT//2)
         pygame.display.flip()
@@ -403,6 +467,17 @@ def inList(number, numList):
             return True
     return False
 
+#checking that the ball has the right x/y coords
+def rightPosition(personPos, ballPos, ballDirect):
+    #Between the top and bottom of the paddle
+    if ballPos+4>personPos and ballPos-4<personPos+100:
+        return True
+    else:
+        if (ballPos>personPos+50 and ballDirect>0) or (ballPos<personPos+50 and ballDirect<0):
+            return True
+        else:
+            return False
+
 #actual game part
 def main():
     #Having the game actually play
@@ -411,11 +486,12 @@ def main():
     #running intro
     intro(screen)
 
+    paddleWidth  =10
     #actually creating the sprites
-    player1=Paddle(20,HEIGHT//2,10,100,10,BLUE)
-    player2=Paddle(WIDTH-30,HEIGHT//2,10,100,10,BLUE)
-    player3=Paddle(WIDTH//2, HEIGHT-60, 100,10,10,BLUE)
-    player4=Paddle(WIDTH//2, 47,100,10,10,BLUE)
+    player1=Paddle(20,HEIGHT//2,paddleWidth,100,10,BLUE)
+    player2=Paddle(WIDTH-30,HEIGHT//2,paddleWidth,100,10,BLUE)
+    player3=Paddle(WIDTH//2, HEIGHT-60, 100,paddleWidth,10,BLUE)
+    player4=Paddle(WIDTH//2, 47,100,paddleWidth,10,BLUE)
     ball=Ball(WIDTH//2, HEIGHT//2, 9, 7, BLACK)
 
     #sprite group
@@ -440,7 +516,11 @@ def main():
     #More variable stuff
     allowedNumbers={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29}
     time=0
-    timesHit=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    timesHit=[]
+    coolDownTime=FPS//5
+    for i in range(0, coolDownTime):
+        timesHit.append(0)
+
     #list of players
     playerList=[player1, player2, player3, player4]
     #parameters for the players
@@ -493,34 +573,29 @@ def main():
                     player4XDirect=0
 
         #checking for ball-player collisions
+        timesHit[time%coolDownTime]=0
+        #goint through all the players
         for player in playerList:
+            #seeing if the touched
             if pygame.Rect.colliderect(ball.getRect(), player.getRect()):
-                #vertical paddles normal hits
-                if (player==player1 and ball.posX>player1.posX+12) or (player==player2 and ball.posX<player2.posX-2):
-                    ball.hitH()
                 #horizontal paddles edge hits
-                elif (player==player3 and ball.posX>player3.posX+102) or (player==player4 and ball.posX>player4.posX+102):
-                    ball.hitH()
-                elif (player==player3 and ball.posX<player3.posX-2) or (player==player4 and ball.posX<player4.posX-2):
-                    ball.hitH()
-                #horizontal paddles normal hits (both sides)
-                elif (player==player3 and ball.posY<player3.posY-2) or (player==player4 and ball.posY<player4.posY-2):
-                    ball.hitV()
-                elif (player==player3 and ball.posY>player3.posY+12) or (player==player4 and ball.posY>player4.posY+12):
-                    ball.hitV()
-                #vertical paddles edge hits
-                elif (player==player1 and ball.posY<player1.posY-2) or (player==player2 and ball.posY<player2.posY-2):
-                    ball.hitV()
-                elif (player==player1 and ball.posY>player1.posY+102) or (player==player2 and ball.posY<player2.posY+102):
-                    ball.hitV()
+                if (player.isHorizontal):
+                    if rightPosition(player.posX, ball.posX, ball.xDirect) and not inList(1, timesHit):
+                        ball.hitV()
+                    elif not inList(1, timesHit):
+                        ball.hitH()
+                #vertical paddles
+                else:
+                    if rightPosition(player.posY, ball.posY, ball.yDirect) and not inList(1, timesHit):
+                        ball.hitH()
+                    elif not inList(1, timesHit):
+                        ball.hitV()
                 #stopping it from getting stuck and doing something fun
-                timesHit[time%60]="1"
-            else:
-                timesHit[time%60+1]="0"
+                timesHit[time%coolDownTime]=1
 
             #powers
-            if timesHit.count("1")>5:
-                timesHit=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+            #if timesHit.count(1)>3:
+                #timesHit=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
                 #power(ball, player, playerList)
 
         #checking ball for bouncing on top or bottom
@@ -555,7 +630,7 @@ def main():
         elif point==2:
             player3Score+=1
         elif point==-2:
-            player3Score+=1
+            player4Score+=1
         
         #resetting ball because there was a point
         if point!=0:
@@ -573,8 +648,8 @@ def main():
         #showing scores
         player1.displayScore("Player 1: ", player1Score, 100, 20, ORANGE)
         player2.displayScore("Player 2: ", player2Score, 250, 20, ORANGE)
-        player3.displayScore("Player 3: ", player3Score, WIDTH-250, 20, ORANGE)
-        player4.displayScore("Player 4: ", player4Score, WIDTH-100, 20, ORANGE)
+        #player3.displayScore("Player 3: ", player3Score, WIDTH-250, 20, ORANGE)
+        #player4.displayScore("Player 4: ", player4Score, WIDTH-100, 20, ORANGE)
 
         #showing hitboxes (giving them an outline :) )
         pygame.draw.rect(screen, BLACK, player1.playerRect, 3)
@@ -603,10 +678,12 @@ def main():
                 time=0
                 player1.posY=HEIGHT//2
                 player2.posY=HEIGHT//2
-                player1Score=0
-                player2Score=0
-                player3Score=0
-                player4Score=0
+                player3.posX=WIDTH//2
+                player4.posX=WIDTH//2
+                player1Score, player2Score, player3Score, player4Score=0,0,0,0
+                player1YDirect, player2YDirect, player3XDirect, player4XDirect=0,0,0,0
+                pastLocationsX.clear()
+                pastLocationsY.clear()
                 for i in range(0, numFollowers):
                     pastLocationsX.append(0)
                     pastLocationsY.append(0)
