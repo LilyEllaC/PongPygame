@@ -34,7 +34,7 @@ pygame.display.set_caption("Pong")
 clock=pygame.time.Clock()
 #please only set FPS to multiples of 30 for the visual of the trailing balls (nothing will actually break, it will just look different)
 FPS=60
-FPSScaling =  30/FPS
+FPSScaling = 30/FPS
 
 #showing text
 def toScreen(words, font, colour, x, y):
@@ -340,44 +340,58 @@ def isNumber(number):
         return False
 
 #creating the balls for the demo
-def createTrails(ball, numFollowers, pastLocationsX, pastLocationsY, colours, balls):
+def createTrails(ball, numFollowers, pastLocationsX, pastLocationsY, colours, balls, time):
+    #allowed number list
+    #allowedNumbers={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29}
+    allowedNumbers={0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58}
+    
     #having the amount change when the number changes
     if (isNumber(numFollowers)):
         length=len(balls)
-        #adding
-        if int(numFollowers)>length:
-            for i in range(0, int(numFollowers)-length):
-                pastLocationsX.append(0)
-                pastLocationsY.append(0)
+        #recreating when the number changes
+        if int(numFollowers)!=length:
+            pastLocationsX.clear()
+            pastLocationsY.clear()
+            balls.clear()
+            for i in range(0, int(numFollowers)):
+                pastLocationsX.append(-10)
+                pastLocationsY.append(-10)
                 balls.append(Ball(WIDTH//2, HEIGHT//2, 7-i/(int(numFollowers)/7), 7, colours[i%7]))
-        #removing
-        elif int(numFollowers)<length:
-            for i in range(int(numFollowers), length):
-                pastLocationsX.pop(int(numFollowers))
-                pastLocationsY.pop(int(numFollowers))
-                balls.pop(int(numFollowers))
-    
+        
     #having the ball move around
     #top right
     if ball.posX>WIDTH-20 and ball.posY<20:
-        ball.posX=WIDTH-10
+        #ball.posX=WIDTH-10
         ball.xDirect=0
         ball.yDirect=1
     #bottom left
     if ball.posX<20 and ball.posY>HEIGHT-20:
         ball.xDirect=0
         ball.yDirect=-1
-        ball.posX=10
+        #ball.posX=10
     #bottom right
     if ball.posY>HEIGHT-20 and ball.posX>WIDTH-20:
         ball.xDirect=-1
         ball.yDirect=0
-        ball.posY=HEIGHT-10
+        #ball.posY=HEIGHT-10
     #top left
     if ball.posY<20 and ball.posX<20:
         ball.xDirect=1
         ball.yDirect=0
-        ball.posY=10
+        #ball.posY=10
+    
+    #saving the past locations
+    if inList((time%(FPS)*FPSScaling), allowedNumbers):
+        pastLocationsX.append(ball.posX)
+        pastLocationsY.append(ball.posY)
+        pastLocationsX.pop(0)
+        pastLocationsY.pop(0)
+
+    #having the balls actually follow
+    for i in range(0,len(balls)):
+        balls[i].posX=pastLocationsX[len(balls)-i-1]
+        balls[i].posY=pastLocationsY[len(balls)-i-1]
+        balls[i].display()
 
     ball.update()
     ball.display()
@@ -388,21 +402,24 @@ def getNumFollowers():
     running=True
     colour=RED
     rightSpot=False
+    time=0
     #showing the demo of the balls
     #creating the main ball
-    ball=Ball(10, 10, 9, 3.5, BLACK)
+    ball=Ball(10, 10, 9, 7, BLACK)
     #seeing the past locations
     pastLocationsX=[]
     pastLocationsY=[]
     #creating the followers
     balls=[]
     #having the balls follow it just for fun
-    colours=[RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE, MAGENTA]
+    #colours missing yellow because the background is yellow
+    colours=[RED, ORANGE, GREEN, LIGHT_BLUE, BLUE, PURPLE, MAGENTA]
 
     #so it can stop
     while running:
         #displaying
         screen.fill("YELLOW")
+        time+=1
         for event in pygame.event.get():
             if event.type==pygame.QUIT:
                 running=False
@@ -420,7 +437,8 @@ def getNumFollowers():
                     numFollowers+=event.unicode
         
         #creating the balls
-        #createTrails(ball, numFollowers, pastLocationsX, pastLocationsY, colours, balls)
+        if numFollowers!="":
+            createTrails(ball, int(numFollowers)*4//5, pastLocationsX, pastLocationsY, colours, balls, time)
 
         #checking whether it is a number
         if isNumber(numFollowers):
@@ -456,6 +474,10 @@ def getNumFollowers():
 
         toScreen(numFollowers, font25, RED, WIDTH//2, HEIGHT//2)
         pygame.display.flip()
+        clock.tick(FPS)
+
+    #continuing (deleting to save memory)
+    balls.clear()
     return int(numFollowers)
 
 #seeing if a number is in a list
