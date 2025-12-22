@@ -8,22 +8,30 @@ font15=pygame.font.Font('freesansbold.ttf', 15)
 font20=pygame.font.Font('freesansbold.ttf', 20)
 font25=pygame.font.Font('freesansbold.ttf', 25)
 font30=pygame.font.Font('freesansbold.ttf', 30)
+font37=pygame.font.Font('freesansbold.ttf', 37)
 font40=pygame.font.Font('freesansbold.ttf', 40)
 font200=pygame.font.Font('freesansbold.ttf', 200)
 
 #setting colours
 RED=(255,0,0)
+LIGHT_RED=(137,0,0)
 ORANGE=(255,137,0)
-YELLOW=(247,255,0)
-GREEN=(0,255,0)
+LIGHT_ORANGE=(137,68,0)
+YELLOW=(255,255,0)
+LIGHT_YELLOW=(137,137,0)
+GREEN=(0,230,15)
 LIGHT_GREEN=(125,255,125)
-LIGHT_BLUE=(0,230,255)
 BLUE=(0,0,255)
+LIGHTISH_BLUE=(0,137,255)
+LIGHT_BLUE=(0,230,255)
 PURPLE=(179,0,255)
+LIGHT_PURPLE=(215, 80, 255)
 MAGENTA=(255,0,255)
+DARK_MAGENTA=(137,0,137)
 WHITE=(255,255,255)
 BLACK=(0,0,0)
 GRAY=(177,177,177)
+DARK_GRAY=(100,100,100)
 
 #screen
 WIDTH,HEIGHT= 900, 600
@@ -33,8 +41,9 @@ pygame.display.set_caption("Pong")
 #clock framerate
 clock=pygame.time.Clock()
 #please only set FPS to multiples of 30 for the visual of the trailing balls (nothing will actually break, it will just look different)
-FPS=60
+FPS=30
 FPSScaling = 30/FPS
+gameRunning=True
 
 #showing text
 def toScreen(words, font, colour, x, y):
@@ -130,8 +139,6 @@ class Ball:
         self.posX+=self.speed*self.xDirect
         self.posY+=self.speed*self.yDirect
         self.ballRect.x=self.posX-7
-        if self.posY>HEIGHT+10 or self.posY<-10:
-            self.posY=HEIGHT//2
         self.ballRect.y=self.posY-7
 
         #touching left wall for the first time
@@ -197,114 +204,36 @@ class Reload(pygame.sprite.Sprite):
         self.posX=WIDTH//2-50
         self.posY=450
 
-#having an intro screen
-def intro(screenSurface):
-    playing=False
-    colour=RED
-    while not playing:
-        screenSurface.fill(BLUE)
-        #drawing play button
-        #rectangle
-        rect=(WIDTH//2-50, 490, 100,100)
-        pygame.draw.rect(screenSurface, colour, rect, 0, 0)
-        #triangle
-        trianglePoints=[(WIDTH//2-35, 500), (WIDTH//2-35, 580), (WIDTH//2+40, 540)]
-        pygame.draw.polygon(screenSurface, BLACK, trianglePoints)
-
-
-        #showing title
-        toScreen("PONG", font200, RED, WIDTH//2, 100)
-
-        #Instructions
-        toScreen("This is a 2 player game of pong where the ball gets faster everytime",font25,GRAY,WIDTH//2, 200)
-        toScreen("it gets hit until a point is scored. A point gets scored when the ball ", font25, GRAY, WIDTH//2, 226)
-        toScreen("hits either the left or right wall.", font25, GRAY, WIDTH//2, 251)
-        toScreen("Use the w and s keys for the left paddle, and the up and down keys for the right paddle", font25, GRAY, WIDTH//2, 277)
-        toScreen("The top and bottom paddles are just for helping score points.", font25, GRAY, WIDTH//2, 303)
-        toScreen("Use the a and d keys for the top paddle (left player)", font25, GRAY, WIDTH//2, 328)
-        toScreen("and the left and right keys for the bottom paddle (right player)", font25, GRAY, WIDTH//2, 354)
-        toScreen("Have fun!", font25, GREEN, WIDTH//2, 380)
-
-
-        #showing text
-        toScreen("Press to play: ", font20, BLACK, WIDTH//2, 475)
-
-        #get mouse coords
-        mouseX, mouseY=pygame.mouse.get_pos()
-        #see if it is in the right spot
-        if (mouseX<WIDTH//2+50 and mouseX>WIDTH//2-50) and (mouseY<590 and mouseY>490):
-            rightSpot=True
-            colour=ORANGE
-        else:
-            rightSpot=False
-            colour=RED
-        for event in pygame.event.get():
-            if event.type==pygame.QUIT:
-                playing=True
-            if event.type==pygame.MOUSEBUTTONDOWN and rightSpot:
-                playing=True
-
-        #updating the board image
-        pygame.display.flip()
-
-#having an ending scene
-def outro(screenSurface, p1Points, p2Points, running, reloadSign):
-    replaying=False
-    colour=BLACK
-    rightSpot=False
-    while not replaying and running:
-        for event in pygame.event.get():
-            if event.type==pygame.QUIT:
-                running=False
-        screenSurface.fill(RED)
-
-        #showing score
-        toScreen("Player 1: "+str(p1Points), font20, GREEN, 100, 20)
-        toScreen("Player 2: "+str(p2Points), font20, GREEN, 250, 20)
-        #toScreen("Player 3: "+str(p3Points), font20, GREEN, WIDTH-250, 20)
-        #toScreen("Player 4: "+str(p4Points), font20, GREEN, WIDTH-100, 20)
-
-        #showing who won
-        if p1Points>p2Points:
-            text=font30.render("Player 1 won!", True, BLACK)
-        elif p2Points>p1Points:
-            text=font30.render("Player 2 won!", True, BLACK)
-        else:
-            text=font30.render("It's a tie!", True, BLACK)
-        textRect=text.get_rect()
-        textRect.center=(WIDTH//2-15,100)
-        screen.blit(text, textRect)
-
-
-        #showing text
-        toScreen("Press to replay: ", font20, BLACK, WIDTH//2, HEIGHT//2-75)
-
-        #get mouse coords
-        mouseX, mouseY=pygame.mouse.get_pos()
-        #see if it is in the right spot
-        if (mouseX<WIDTH//2+55 and mouseX>WIDTH//2-55) and (mouseY<HEIGHT//2+55 and mouseY>HEIGHT//2-55):
-            rightSpot=True
-            colour=LIGHT_BLUE
-        else:
-            rightSpot=False
-            colour=BLUE
-        for event in pygame.event.get():
-            if event.type==pygame.MOUSEBUTTONDOWN and (rightSpot or colour==LIGHT_BLUE):
-                replaying=True
-            if event.type==pygame.MOUSEBUTTONDOWN:
-                print("Mouse clicked")
-        #button
-        rect=(WIDTH//2-55, HEIGHT//2-55, 110,110)
-        pygame.draw.rect(screenSurface, colour, rect, 0, 0)
-        #getting the reload sign
-        for sign in reloadSign:
-            sign.rect.x=WIDTH//2-50
-            sign.rect.y=HEIGHT//2-50
-        reloadSign.update()
-        reloadSign.draw(screen)
-
-        pygame.display.flip()
-    return replaying
+#celebration confetti
+class Confetti(pygame.sprite.Sprite):
+    def __init__(self, width, height, x, y, angle):
+        super().__init__()
+        self.width=width
+        self.height=height
+        self.x=x
+        self.y=y
+        self.angle=angle
+        image=pygame.image.load("confetti.png")
+        self.image=pygame.transform.scale(image, (width, height))
+        self.image=pygame.transform.rotate(self.image, self.angle)
+        self.rect=self.image.get_rect()
+        self.rect.x=self.x
+        self.rect.y=self.y
+    
+    def update(self):
+        #moving down slowly and drifting a little
+        self.rect.y+=10*FPSScaling
+        self.rect.x+=random.randint(-2,2)*FPSScaling
+        self.angle+=random.randint(-15,15)*FPSScaling
+        image=pygame.image.load("confetti.png")
+        image=pygame.transform.scale(image, (self.width, self.height))
+        self.image=pygame.transform.rotate(image, self.angle) 
+        #resetting if too low
+        if self.rect.y>HEIGHT:
+            self.rect.y=random.randint(-60,-30)
+            self.rect.x=random.randint(0,WIDTH)
+        self.y=self.rect.y
+        self.x=self.rect.x
 
 #having fun with a glitch that hopefully doesn't even happen anymore
 def power(ball, player, playerList):
@@ -396,10 +325,135 @@ def createTrails(ball, numFollowers, pastLocationsX, pastLocationsY, colours, ba
     ball.update()
     ball.display()
 
+#seeing if a number is in a list
+def inList(number, numList):
+    #going through
+    for num in numList:
+        #returning answer
+        if num==number:
+            return True
+    return False
+
+#checking that the ball has the right x/y coords
+def rightPosition(personPos, ballPos, ballDirect):
+    #Between the top and bottom of the paddle
+    if ballPos+4>personPos and ballPos-4<personPos+100:
+        return True
+    else:
+        if (ballPos>personPos+50 and ballDirect>0) or (ballPos<personPos+50 and ballDirect<0):
+            return True
+        else:
+            return False
+
+#drawing the outline for the buttons
+def drawOutlines(xPos, yPos, width, height):
+    rect=(xPos, yPos, width, height)
+    pygame.draw.rect(screen, BLACK, rect, 3)
+
+#checking if they are in the right spot
+def checkSpot(xPos, yPos, width, height, colour):
+    #getting mouse positions
+    mouseX, mouseY=pygame.mouse.get_pos()
+    if (mouseX>xPos and mouseX<xPos+width) and (mouseY>yPos and mouseY<yPos+height):
+        if colour%2==0:
+            colour+=1
+    elif colour%2==1:
+        colour-=1
+    #returning the colour
+    return colour
+
+#check clicks
+def checkClicks(boxes):
+    global gameRunning
+    endingScenario=[]
+    mouseX, mouseY=pygame.mouse.get_pos()
+
+    #checking if it got clicked
+    for event in pygame.event.get():
+        #stopping
+        if event.type==pygame.QUIT:
+            gameRunning=False
+        if event.type==pygame.MOUSEBUTTONDOWN:
+            for box in boxes:
+                if box%2==1:
+                    print("CLICKED")
+                    #having it remember whether it is time or points based
+                    if mouseY<300:
+                        endingScenario.append(0)
+                    else:
+                        endingScenario.append(1)
+                    #Remembering the time/points to win
+                    if box==boxes[0]:
+                        endingScenario.append(60)
+                    elif box==boxes[1]:
+                        endingScenario.append(120)
+                    elif box==boxes[2]:
+                        endingScenario.append(180)
+                    #points
+                    elif box==boxes[3]:
+                        endingScenario.append(3)
+                    elif box==boxes[4]:
+                        endingScenario.append(5)
+                    elif box==boxes[5]:
+                        endingScenario.append(10)
+    return endingScenario
+
+#having an intro screen
+def intro(screenSurface):
+    global gameRunning
+    playing=False
+    colour=RED
+    while not playing and gameRunning:
+        screenSurface.fill(BLUE)
+        #drawing play button
+        #rectangle
+        rect=(WIDTH//2-50, 490, 100,100)
+        pygame.draw.rect(screenSurface, colour, rect, 0, 0)
+        #triangle
+        trianglePoints=[(WIDTH//2-35, 500), (WIDTH//2-35, 580), (WIDTH//2+40, 540)]
+        pygame.draw.polygon(screenSurface, BLACK, trianglePoints)
+
+
+        #showing title
+        toScreen("PONG", font200, RED, WIDTH//2, 100)
+
+        #Instructions
+        toScreen("This is a 2 player game of pong where the ball gets faster everytime",font25,GRAY,WIDTH//2, 200)
+        toScreen("it gets hit until a point is scored. A point gets scored when the ball ", font25, GRAY, WIDTH//2, 226)
+        toScreen("hits either the left or right wall.", font25, GRAY, WIDTH//2, 251)
+        toScreen("Use the w and s keys for the left paddle, and the up and down keys for the right paddle", font25, GRAY, WIDTH//2, 277)
+        toScreen("The top and bottom paddles are just for helping score points.", font25, GRAY, WIDTH//2, 303)
+        toScreen("Use the a and d keys for the top paddle (left player)", font25, GRAY, WIDTH//2, 328)
+        toScreen("and the left and right keys for the bottom paddle (right player)", font25, GRAY, WIDTH//2, 354)
+        toScreen("Have fun!", font25, GREEN, WIDTH//2, 380)
+
+
+        #showing text
+        toScreen("Press to play: ", font20, BLACK, WIDTH//2, 475)
+
+        #get mouse coords
+        mouseX, mouseY=pygame.mouse.get_pos()
+        #see if it is in the right spot
+        if (mouseX<WIDTH//2+50 and mouseX>WIDTH//2-50) and (mouseY<590 and mouseY>490):
+            rightSpot=True
+            colour=ORANGE
+        else:
+            rightSpot=False
+            colour=RED
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:
+                gameRunning=False
+            if event.type==pygame.MOUSEBUTTONDOWN and rightSpot:
+                playing=True
+
+        #updating the board image
+        pygame.display.flip()
+
 #typing!
 def getNumFollowers():
     numFollowers=""
     running=True
+    global gameRunning
     colour=RED
     rightSpot=False
     time=0
@@ -416,14 +470,13 @@ def getNumFollowers():
     colours=[RED, ORANGE, GREEN, LIGHT_BLUE, BLUE, PURPLE, MAGENTA]
 
     #so it can stop
-    while running:
+    while running and gameRunning:
         #displaying
         screen.fill("YELLOW")
         time+=1
         for event in pygame.event.get():
             if event.type==pygame.QUIT:
-                running=False
-                numFollowers="75"
+                gameRunning=False
             if event.type==pygame.MOUSEBUTTONDOWN and rightSpot:
                 running=False
             if event.type==pygame.KEYDOWN:
@@ -437,8 +490,7 @@ def getNumFollowers():
                     numFollowers+=event.unicode
         
         #creating the balls
-        if numFollowers!="":
-            createTrails(ball, int(numFollowers)*4//5, pastLocationsX, pastLocationsY, colours, balls, time)
+        createTrails(ball, numFollowers, pastLocationsX, pastLocationsY, colours, balls, time)
 
         #checking whether it is a number
         if isNumber(numFollowers):
@@ -478,37 +530,206 @@ def getNumFollowers():
 
     #continuing (deleting to save memory)
     balls.clear()
+    #if already closed
+    if numFollowers=="":
+        numFollowers="75"
     return int(numFollowers)
 
-#seeing if a number is in a list
-def inList(number, numList):
-    #going through
-    for num in numList:
-        #returning answer
-        if num==number:
-            return True
-    return False
+#getting the way the game ends
+def getEndVariables():
+    running=True
+    global gameRunning
+    endingScenario=[]
+    check=[]
+    #colours
+    colours=[RED, LIGHT_RED, ORANGE, LIGHT_ORANGE, YELLOW, LIGHT_YELLOW, GREEN, LIGHT_GREEN, BLUE, LIGHTISH_BLUE, PURPLE, LIGHT_PURPLE]
+    box1=0
+    box2=2
+    box3=4
+    box4=6
+    box5=8
+    box6=10
+    boxes=[box1, box2, box3, box4, box5, box6]
+    #creating variables for the x and y coords
+    xPos1And4=50
+    xPos2And5=WIDTH//2-100
+    xPos3And6=WIDTH-250
+    yPos123=150
+    yPos456=400
+    xPos=[xPos1And4, xPos2And5, xPos3And6]
+    yPos=[yPos123, yPos456]
 
-#checking that the ball has the right x/y coords
-def rightPosition(personPos, ballPos, ballDirect):
-    #Between the top and bottom of the paddle
-    if ballPos+4>personPos and ballPos-4<personPos+100:
-        return True
-    else:
-        if (ballPos>personPos+50 and ballDirect>0) or (ballPos<personPos+50 and ballDirect<0):
-            return True
+    #height and width
+    height, width=150,200
+
+    #running the code
+    while running and gameRunning:
+                        
+
+        screen.fill(DARK_MAGENTA)
+
+        #showing the boxes
+        #box1 (1 minute)
+        rect=(xPos1And4, yPos123, width, height)
+        pygame.draw.rect(screen, colours[box1], rect, 0, 0)
+        #box2 (2 minutes)
+        rect=(xPos2And5, yPos123, width, height)
+        pygame.draw.rect(screen, colours[box2], rect, 0, 0)
+        #box3 (3 minutes?)
+        rect=(xPos3And6, yPos123, width, height)
+        pygame.draw.rect(screen, colours[box3], rect, 0, 0)
+        #box4 (3 points?)
+        rect=(xPos1And4, yPos456, width, height)
+        pygame.draw.rect(screen, colours[box4], rect, 0, 0)
+        #box5 (5 points?)
+        rect=(xPos2And5, yPos456, width, height)
+        pygame.draw.rect(screen, colours[box5], rect, 0, 0)
+        #box6 (10 points?)
+        rect=(xPos3And6, yPos456, width, height)
+        pygame.draw.rect(screen, colours[box6], rect, 0, 0)
+
+        #outlines
+        drawOutlines(xPos1And4, yPos123, width, height)
+        drawOutlines(xPos2And5, yPos123, width, height)
+        drawOutlines(xPos3And6, yPos123, width, height)
+        drawOutlines(xPos1And4, yPos456, width, height)
+        drawOutlines(xPos2And5, yPos456, width, height)
+        drawOutlines(xPos3And6, yPos456, width, height)
+
+        #seeing if it is in the right spot
+        box1=checkSpot(xPos1And4, yPos123, width, height, box1)
+        box2=checkSpot(xPos2And5, yPos123, width, height, box2)
+        box3=checkSpot(xPos3And6, yPos123, width, height, box3)
+        box4=checkSpot(xPos1And4, yPos456, width, height, box4)
+        box5=checkSpot(xPos2And5, yPos456, width, height, box5)
+        box6=checkSpot(xPos3And6, yPos456, width, height, box6)
+        boxes=[box1, box2, box3, box4, box5, box6]
+
+        #seeing if it got clicked and setting what the ending goal is
+        #for box in boxes:
+         #   if box%2==1:
+        check=checkClicks(boxes)
+        if check!=[]:
+            endingScenario=check
+            print(endingScenario)
+            running=False
+
+
+        #displaying the text
+        toScreen("Please choose when you want the game to end", font37, BLACK, WIDTH//2, 30)
+        toScreen("After a certain length of time:", font30, BLACK, WIDTH//2, 110)
+        toScreen("After someone reaches a certain number of points:", font30, BLACK, WIDTH//2, 360)
+        #each button
+        textColour=BLACK
+        toScreen("1 Minute", font30, textColour, xPos1And4+width//2, yPos123+height//2)
+        toScreen("2 Minutes", font30, textColour, xPos2And5+width//2, yPos123+height//2)
+        toScreen("3 Minutes", font30, textColour, xPos3And6+width//2, yPos123+height//2)
+        toScreen("3 Points", font30, textColour, xPos1And4+width//2, yPos456+height//2)
+        toScreen("5 Points", font30, textColour, xPos2And5+width//2, yPos456+height//2)
+        toScreen("10 points", font30, textColour, xPos3And6+width//2, yPos456+height//2)
+
+
+        #displaying
+        pygame.display.flip()
+        clock.tick(FPS)
+
+    #returning answer
+    return endingScenario
+
+#having an ending scene
+def outro(screenSurface, p1Points, p2Points):
+    global gameRunning
+    replaying=False
+    colour=BLACK
+    rightSpot=False
+
+    #sprite stuff
+    #sprite group
+    sprites=pygame.sprite.Group()
+    #button
+    button=Reload(100,100,WIDTH//2-50, 475)
+    sprites.add(button)
+    confettis=[]
+    #confetti
+    for i in range(0,15):
+        confettis.append(Confetti(100,100,random.randint(0, WIDTH), random.randint(-300,300),random.randint(0,360)))
+        sprites.add(confettis[i])
+
+    #actually running
+    while not replaying and gameRunning:
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:
+                gameRunning=False
+            if event.type==pygame.MOUSEBUTTONDOWN and (rightSpot or colour==LIGHT_BLUE):
+                replaying=True
+            if event.type==pygame.MOUSEBUTTONDOWN:
+                print("Mouse clicked")
+        screenSurface.fill(RED)
+
+        #showing score
+        toScreen("Player 1: "+str(p1Points), font20, GREEN, 100, 20)
+        toScreen("Player 2: "+str(p2Points), font20, GREEN, 250, 20)
+        #toScreen("Player 3: "+str(p3Points), font20, GREEN, WIDTH-250, 20)
+        #toScreen("Player 4: "+str(p4Points), font20, GREEN, WIDTH-100, 20)
+
+        #showing who won
+        if p1Points>p2Points:
+            text=font30.render("Player 1 won!", True, BLACK)
+        elif p2Points>p1Points:
+            text=font30.render("Player 2 won!", True, BLACK)
         else:
-            return False
+            text=font30.render("It's a tie!", True, BLACK)
+        textRect=text.get_rect()
+        textRect.center=(WIDTH//2-15,100)
+        screen.blit(text, textRect)
+
+
+        #showing text
+        toScreen("Press to replay: ", font20, BLACK, WIDTH//2, HEIGHT//2-75)
+
+        #get mouse coords
+        mouseX, mouseY=pygame.mouse.get_pos()
+        #see if it is in the right spot
+        if (mouseX<WIDTH//2+55 and mouseX>WIDTH//2-55) and (mouseY<HEIGHT//2+55 and mouseY>HEIGHT//2-55):
+            rightSpot=True
+            colour=LIGHT_BLUE
+        else:
+            rightSpot=False
+            colour=BLUE
+            
+        #button
+        rect=(WIDTH//2-55, HEIGHT//2-55, 110,110)
+        pygame.draw.rect(screenSurface, colour, rect, 0, 0)
+        #getting the reload sign
+        button.rect.x=WIDTH//2-50
+        button.rect.y=HEIGHT//2-50
+        #having the confetti move
+        for confetti in confettis:
+            confetti.update()
+        
+        #sprites
+        sprites.draw(screen)
+
+        pygame.display.flip()
+        clock.tick(FPS)
+    return replaying
 
 #actual game part
 def main():
     #Having the game actually play
     running=True
+    global gameRunning
 
     #running intro
     intro(screen)
+    outro(screen,0,0)
+    #getting the number of followers
+    numFollowers=getNumFollowers()
+    #getting the ending scenario
+    endingScenario=getEndVariables()
 
-    paddleWidth  =10
+
+    paddleWidth=10
     #actually creating the sprites
     player1=Paddle(20,HEIGHT//2,paddleWidth,100,10,BLUE)
     player2=Paddle(WIDTH-30,HEIGHT//2,paddleWidth,100,10,BLUE)
@@ -516,15 +737,10 @@ def main():
     player4=Paddle(WIDTH//2, 47,100,paddleWidth,10,BLUE)
     ball=Ball(WIDTH//2, HEIGHT//2, 9, 7, BLACK)
 
-    #sprite group
-    sprites=pygame.sprite.Group()
-    button=Reload(100,100,WIDTH//2-50, 475)
-    sprites.add(button)
-
     #having a small trail of balls behind to look cool
     colours=[RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE, MAGENTA]
     #seeing the past locations
-    numFollowers=getNumFollowers()
+    
     pastLocationsX=[]
     pastLocationsY=[]
     for i in range(0, numFollowers):
@@ -532,8 +748,12 @@ def main():
         pastLocationsY.append(0)
     #creating the followers
     balls=[]
-    for i in range(1,numFollowers+1):
-        balls.append(Ball(WIDTH//2, HEIGHT//2, 7-i/(numFollowers//7), 7, colours[i%7]))
+    if numFollowers>=7:
+        for i in range(1,numFollowers+1):
+            balls.append(Ball(WIDTH//2, HEIGHT//2, 7-i/(numFollowers//7), 7, colours[i%7]))
+    else:
+        for i in range(1,numFollowers+1):
+            balls.append(Ball(WIDTH//2, HEIGHT//2, 7-i*(numFollowers/7), 7, colours[i%7]))
 
     #More variable stuff
     allowedNumbers={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29}
@@ -549,8 +769,9 @@ def main():
     player1Score, player2Score, player3Score, player4Score=0,0,0,0
     player1YDirect, player2YDirect, player3XDirect, player4XDirect=0,0,0,0
 
+
     #having it loop until it stops
-    while running:
+    while running and gameRunning:
         time+=1
         #drawing background
         screen.fill(LIGHT_BLUE)
@@ -558,7 +779,7 @@ def main():
         #handling events (such as a buton or closing)
         for event in pygame.event.get():
             if event.type==pygame.QUIT:
-                running=False
+                gameRunning=False
             if event.type==pygame.KEYDOWN:
                 #changing direction when a key is pressed
                 #p2
@@ -679,8 +900,23 @@ def main():
         pygame.draw.rect(screen, BLACK, player3.playerRect, 3)
         pygame.draw.rect(screen, BLACK, player4.playerRect, 3)
 
-        #displaying time
-        toScreen("Time left: "+str(120-(time//FPS)), font20, RED, 450, 20)
+
+        
+        #getting it to end when they want it to
+        #time
+        ending=False
+        if endingScenario[0]==0:
+            #displaying time
+            toScreen("Time left: "+str(endingScenario[1]-(time//FPS)), font20, RED, 450, 20)
+            #checking
+            if time==FPS*endingScenario[1]:
+                ending=True
+        elif endingScenario[0]==1:
+            #displaying time
+            toScreen("Time: "+str(time//FPS), font20, RED, 450, 20)
+            #checking
+            if player1Score==endingScenario[1] or player2Score==endingScenario[1]:
+                ending=True
 
         #updating the screen
         pygame.display.update()
@@ -688,9 +924,10 @@ def main():
 
         #frame rate
         clock.tick(FPS)
-        #stopping at the end of the time
-        if time==FPS*60*2:
-            running=outro(screen, player1Score, player2Score, running, sprites)
+
+        #stopping 
+        if ending:
+            running=outro(screen, player1Score, player2Score)
             #resetting variables
             if running:
                 for i in range(0, numFollowers):
