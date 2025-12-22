@@ -1,6 +1,5 @@
 import pygame
 import random
-import math
 pygame.init()
 
 #get fonts
@@ -556,8 +555,6 @@ def getEndVariables():
     xPos3And6=WIDTH-250
     yPos123=150
     yPos456=400
-    xPos=[xPos1And4, xPos2And5, xPos3And6]
-    yPos=[yPos123, yPos456]
 
     #height and width
     height, width=150,200
@@ -606,8 +603,6 @@ def getEndVariables():
         boxes=[box1, box2, box3, box4, box5, box6]
 
         #seeing if it got clicked and setting what the ending goal is
-        #for box in boxes:
-         #   if box%2==1:
         check=checkClicks(boxes)
         if check!=[]:
             endingScenario=check
@@ -640,8 +635,13 @@ def getEndVariables():
 def outro(screenSurface, p1Points, p2Points):
     global gameRunning
     replaying=False
-    colour=BLACK
-    rightSpot=False
+    #stuff ofr the buttons
+    restartRect=(WIDTH//2-55, HEIGHT//2-55, 110,110)
+    rectX, rectY, rectWidth, rectHeight=WIDTH-133,10,120,50
+    quitRect=(rectX, rectY, rectWidth, rectHeight)
+    colours=[BLUE, LIGHTISH_BLUE, RED, LIGHT_RED]
+    restartColour=0
+    quitColour=2
 
     #sprite stuff
     #sprite group
@@ -660,15 +660,15 @@ def outro(screenSurface, p1Points, p2Points):
         for event in pygame.event.get():
             if event.type==pygame.QUIT:
                 gameRunning=False
-            if event.type==pygame.MOUSEBUTTONDOWN and (rightSpot or colour==LIGHT_BLUE):
+            elif event.type==pygame.MOUSEBUTTONDOWN and restartColour==1:
                 replaying=True
-            if event.type==pygame.MOUSEBUTTONDOWN:
-                print("Mouse clicked")
-        screenSurface.fill(RED)
+            elif event.type==pygame.MOUSEBUTTONDOWN and quitColour==3:
+                gameRunning=False
+        screenSurface.fill(LIGHT_GREEN)
 
         #showing score
-        toScreen("Player 1: "+str(p1Points), font20, GREEN, 100, 20)
-        toScreen("Player 2: "+str(p2Points), font20, GREEN, 250, 20)
+        toScreen("Player 1: "+str(p1Points), font20, PURPLE, 100, 20)
+        toScreen("Player 2: "+str(p2Points), font20, PURPLE, 250, 20)
         #toScreen("Player 3: "+str(p3Points), font20, GREEN, WIDTH-250, 20)
         #toScreen("Player 4: "+str(p4Points), font20, GREEN, WIDTH-100, 20)
 
@@ -683,26 +683,24 @@ def outro(screenSurface, p1Points, p2Points):
         textRect.center=(WIDTH//2-15,100)
         screen.blit(text, textRect)
 
-
         #showing text
-        toScreen("Press to replay: ", font20, BLACK, WIDTH//2, HEIGHT//2-75)
+        toScreen("Press to replay:", font20, BLACK, WIDTH//2, HEIGHT//2-75)
 
-        #get mouse coords
-        mouseX, mouseY=pygame.mouse.get_pos()
         #see if it is in the right spot
-        if (mouseX<WIDTH//2+55 and mouseX>WIDTH//2-55) and (mouseY<HEIGHT//2+55 and mouseY>HEIGHT//2-55):
-            rightSpot=True
-            colour=LIGHT_BLUE
-        else:
-            rightSpot=False
-            colour=BLUE
+        restartColour=checkSpot(WIDTH//2-55, HEIGHT//2-55, 110, 110, restartColour)
+        quitColour=checkSpot(rectX, rectY, rectWidth, rectHeight, quitColour)
             
         #button
-        rect=(WIDTH//2-55, HEIGHT//2-55, 110,110)
-        pygame.draw.rect(screenSurface, colour, rect, 0, 0)
+        pygame.draw.rect(screenSurface, colours[restartColour], restartRect, 0, 0)
+        drawOutlines(WIDTH//2-55, HEIGHT//2-55, 110, 110)
         #getting the reload sign
         button.rect.x=WIDTH//2-50
         button.rect.y=HEIGHT//2-50
+        #Quit button
+        pygame.draw.rect(screenSurface, colours[quitColour], quitRect)
+        drawOutlines(rectX, rectY, rectWidth, rectHeight)
+        toScreen("QUIT", font40, BLACK, WIDTH-75, 38)
+
         #having the confetti move
         for confetti in confettis:
             confetti.update()
