@@ -20,7 +20,7 @@ A 2 player game of pong with fun visuals and a bonus of there being two paddles 
     ```bash
     ./pong
     ```
-# I don't think the execute thing actually works because this isn't c++ #
+# I don't think the execute thing actually works because this isn't c++ 
 
 ## How to play
 

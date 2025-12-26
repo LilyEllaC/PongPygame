@@ -1,7 +1,8 @@
-import pygame
 import random
-pygame.init()
+import pygame
+# pylint: disable=no-member
 
+pygame.init()
 #get fonts
 font15=pygame.font.Font('freesansbold.ttf', 15)
 font20=pygame.font.Font('freesansbold.ttf', 20)
@@ -13,18 +14,21 @@ font200=pygame.font.Font('freesansbold.ttf', 200)
 
 #setting colours
 RED=(255,0,0)
-LIGHT_RED=(137,0,0)
+DARK_RED=(137,0,0)
 ORANGE=(255,137,0)
-LIGHT_ORANGE=(137,68,0)
+DARK_ORANGE=(137,68,0)
 YELLOW=(255,255,0)
-LIGHT_YELLOW=(137,137,0)
+DARK_YELLOW=(137,137,0)
 GREEN=(0,230,15)
 LIGHT_GREEN=(125,255,125)
+DARK_GREEN=(0, 150, 0)
+TEAL=(55,225,250)
+DARK_TEAL=(0, 137, 137)
 BLUE=(0,0,255)
-LIGHTISH_BLUE=(0,137,255)
+DARK_BLUE=(0,0,170)
 LIGHT_BLUE=(0,230,255)
 PURPLE=(179,0,255)
-LIGHT_PURPLE=(215, 80, 255)
+DARK_PURPLE=(100, 0, 150)
 MAGENTA=(255,0,255)
 DARK_MAGENTA=(137,0,137)
 WHITE=(255,255,255)
@@ -50,6 +54,22 @@ def toScreen(words, font, colour, x, y):
     textRect=text.get_rect()
     textRect.center=(x, y)
     screen.blit(text, textRect)
+
+#showing 2 lines of text
+def toScreen2(words1, words2, font, colour, x, y):
+    #first line
+    toScreen(words1, font, colour, x, y-font.get_height()//2)
+    #next line
+    toScreen(words2, font, colour, x, y+font.get_height()//2)
+ 
+#three lines
+def toScreen3(words1, words2, words3, font, colour, x, y):
+    #first line
+    toScreen(words1, font, colour, x, y-font.get_height())
+    #next line
+    toScreen(words2, font, colour, x, y)
+    #third line
+    toScreen(words3, font, colour, x, y+font.get_height())
 
 #getting the paddle class
 class Paddle:
@@ -365,7 +385,7 @@ def checkSpot(xPos, yPos, width, height, colour):
 def checkClicks(boxes):
     global gameRunning
     endingScenario=[]
-    mouseX, mouseY=pygame.mouse.get_pos()
+    _, mouseY=pygame.mouse.get_pos()
 
     #checking if it got clicked
     for event in pygame.event.get():
@@ -375,7 +395,6 @@ def checkClicks(boxes):
         if event.type==pygame.MOUSEBUTTONDOWN:
             for box in boxes:
                 if box%2==1:
-                    print("CLICKED")
                     #having it remember whether it is time or points based
                     if mouseY<300:
                         endingScenario.append(0)
@@ -395,6 +414,142 @@ def checkClicks(boxes):
                         endingScenario.append(5)
                     elif box==boxes[5]:
                         endingScenario.append(10)
+    return endingScenario
+
+#double checking that they are sure of their answer
+def doubleCheck(endScenario):
+    global gameRunning
+    running=True
+    box=(WIDTH//2-300, HEIGHT//2-200, 600, 400)
+    width, height=75,50
+    yesBox=(WIDTH//2-100-width, HEIGHT//2+50, width, height)
+    noBox=(WIDTH//2+100, HEIGHT//2+50, width, height)
+    colours=[RED, DARK_RED, GREEN, DARK_GREEN]
+    yesColour, noColour=2,0
+    keep=False
+
+    #having it say the right thing
+    if endScenario[0]==1:
+        word=str(endScenario[1])+" points"
+    else:
+        word=str(endScenario//60)+" minutes"
+    
+    while running and gameRunning:
+        #box
+        pygame.draw.rect(screen, GRAY, box)
+        drawOutlines(WIDTH//2-300, HEIGHT//2-200, 600, 400)
+
+        #text
+        toScreen3("Are you sure you want the game", "to go to "+word+"?", "That would be a really long game.", font30, BLACK, WIDTH//2, HEIGHT//2-30)
+        
+        #yes and no buttons
+        yesColour=drawTextSqauare(colours, yesColour,"Yes", yesBox)
+        noColour=drawTextSqauare(colours, noColour,"No", noBox)
+
+        #checking stuff
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:
+                gameRunning=False
+            if event.type==pygame.MOUSEBUTTONDOWN:
+                if yesColour==3:
+                    keep=True
+                    running=False
+                elif noColour==1:
+                    keep=False
+                    running=False
+
+        #loading
+        clock.tick(FPS)
+        pygame.display.flip()
+    return keep
+
+#drawing the yes and no buttons
+def drawTextSqauare(colours, colour, text, location):
+    colour=checkSpot(location[0], location[1], location[2], location[3], colour)    
+    pygame.draw.rect(screen, colours[colour], location)
+    drawOutlines(location[0], location[1], location[2], location[3])
+    toScreen(text, font25, BLACK, location[0]+location[2]//2, location[1]+location[3]/2)
+    return colour
+
+#other end parameter
+def findOther(endingScenario):
+    global gameRunning
+    running=True
+    rect=(WIDTH//2-50, HEIGHT-110, 100, 100)
+    trianglePoints=[(WIDTH//2-35, HEIGHT-100), (WIDTH//2-35, HEIGHT-20), (WIDTH//2+40, HEIGHT-60)]
+    colour=RED
+    endGoal=""
+    question="Why don't I have a question?"
+    clicked=False
+
+    #seeing what to ask
+    if endingScenario[0]==1:
+        question="What score do you want the maximum to be?"
+    elif endingScenario[0]==0:
+        question="How many minutes do you want the game to run?"
+
+    #running this
+    while running and gameRunning:
+        screen.fill(MAGENTA)
+
+        #stuff
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:
+                gameRunning=False
+            if event.type==pygame.KEYDOWN:
+                #continuing by clicking enter
+                if event.key==pygame.K_RETURN and isNumber(endGoal):
+                    running=False
+                #actually typing
+                if event.key==pygame.K_BACKSPACE:
+                    endGoal=endGoal[:-1]
+                else:
+                    endGoal+=event.unicode
+            #checking clicking
+            if event.type==pygame.MOUSEBUTTONDOWN and colour==DARK_GREEN:
+                clicked=True
+                if endingScenario[0]==1:
+                    endingScenario.append(int(endGoal))
+                else: 
+                    endingScenario.append(int(endGoal)*60)
+        
+        #getting the button to change colour
+        if isNumber(endGoal):
+            colour=GREEN
+        #get mouse coords
+        mouseX, mouseY=pygame.mouse.get_pos()
+        #see if it is in the right spot
+        if (mouseX<WIDTH//2+50 and mouseX>WIDTH//2-50) and (mouseY<HEIGHT-10 and mouseY>HEIGHT-110) and (colour==GREEN or colour==DARK_GREEN):
+            colour=DARK_GREEN
+        elif colour==GREEN or colour==DARK_GREEN:
+            colour=GREEN
+        if  not isNumber(endGoal):
+            colour=RED
+
+        #having the button exist
+        pygame.draw.rect(screen, colour, rect, 0, 0)
+        drawOutlines(WIDTH//2-50, HEIGHT-110, 100, 100)
+        #triangle
+        pygame.draw.polygon(screen, BLACK, trianglePoints)
+
+        #text
+        toScreen(question, font30, BLACK, WIDTH//2, HEIGHT//2-200)
+        toScreen(endGoal, font30, BLACK, WIDTH//2, HEIGHT//2)
+
+        #checking if they are sure for weird answers
+        if len(endingScenario)==2:
+            if ((endingScenario[0]==1 and endingScenario[1]>20) or (endingScenario[0]==0 and int(endGoal)>10)) and clicked:
+                if doubleCheck(endingScenario):
+                    running=False
+                else:
+                    endingScenario.pop(1)
+                    endGoal=""
+            else:
+                running=False
+
+        #displaying
+        pygame.display.flip()
+        clock.tick(FPS)    
     return endingScenario
 
 #having an intro screen
@@ -500,10 +655,10 @@ def getNumFollowers():
         #get mouse coords
         mouseX, mouseY=pygame.mouse.get_pos()
         #see if it is in the right spot
-        if (mouseX<WIDTH//2+50 and mouseX>WIDTH//2-50) and (mouseY<HEIGHT-120 and mouseY>HEIGHT-220) and (colour==GREEN or colour==LIGHT_GREEN):
+        if (mouseX<WIDTH//2+50 and mouseX>WIDTH//2-50) and (mouseY<HEIGHT-120 and mouseY>HEIGHT-220) and (colour==GREEN or colour==DARK_GREEN):
             rightSpot=True
-            colour=LIGHT_GREEN
-        elif colour==GREEN or colour==LIGHT_GREEN:
+            colour=DARK_GREEN
+        elif colour==GREEN or colour==DARK_GREEN:
             rightSpot=False
             colour=GREEN
         else:
@@ -541,28 +696,31 @@ def getEndVariables():
     endingScenario=[]
     check=[]
     #colours
-    colours=[RED, LIGHT_RED, ORANGE, LIGHT_ORANGE, YELLOW, LIGHT_YELLOW, GREEN, LIGHT_GREEN, BLUE, LIGHTISH_BLUE, PURPLE, LIGHT_PURPLE]
+    colours=[RED, DARK_RED, ORANGE, DARK_ORANGE, YELLOW, DARK_YELLOW, GREEN, DARK_GREEN, BLUE, DARK_BLUE, PURPLE, DARK_PURPLE, TEAL, DARK_TEAL]
     box1=0
     box2=2
     box3=4
     box4=6
     box5=8
     box6=10
-    boxes=[box1, box2, box3, box4, box5, box6]
+    boxOther1=12
+    boxOther2=12
+    boxes=[box1, box2, box3, box4, box5, box6, boxOther1, boxOther2]
+
     #creating variables for the x and y coords
-    xPos1And4=50
-    xPos2And5=WIDTH//2-100
-    xPos3And6=WIDTH-250
+    xPos1And4=25
+    xPos2And5=WIDTH//2-195
+    xPos3And6=WIDTH-415
+    xPosOthers=WIDTH-185
     yPos123=150
     yPos456=400
 
     #height and width
-    height, width=150,200
+    height, width=150, 200
+    otherWidth=165
 
     #running the code
     while running and gameRunning:
-                        
-
         screen.fill(DARK_MAGENTA)
 
         #showing the boxes
@@ -584,6 +742,13 @@ def getEndVariables():
         #box6 (10 points?)
         rect=(xPos3And6, yPos456, width, height)
         pygame.draw.rect(screen, colours[box6], rect, 0, 0)
+        #others
+        #box7 (10 points?)
+        rect=(xPosOthers, yPos123, otherWidth, height)
+        pygame.draw.rect(screen, colours[boxOther1], rect, 0, 0)
+        #box8 (10 points?)
+        rect=(xPosOthers, yPos456, otherWidth, height)
+        pygame.draw.rect(screen, colours[boxOther2], rect, 0, 0)
 
         #outlines
         drawOutlines(xPos1And4, yPos123, width, height)
@@ -592,6 +757,8 @@ def getEndVariables():
         drawOutlines(xPos1And4, yPos456, width, height)
         drawOutlines(xPos2And5, yPos456, width, height)
         drawOutlines(xPos3And6, yPos456, width, height)
+        drawOutlines(xPosOthers, yPos123, otherWidth, height)
+        drawOutlines(xPosOthers, yPos456, otherWidth, height)
 
         #seeing if it is in the right spot
         box1=checkSpot(xPos1And4, yPos123, width, height, box1)
@@ -600,20 +767,24 @@ def getEndVariables():
         box4=checkSpot(xPos1And4, yPos456, width, height, box4)
         box5=checkSpot(xPos2And5, yPos456, width, height, box5)
         box6=checkSpot(xPos3And6, yPos456, width, height, box6)
-        boxes=[box1, box2, box3, box4, box5, box6]
+        boxOther1=checkSpot(xPosOthers, yPos123, xPosOthers, height, boxOther1)
+        boxOther2=checkSpot(xPosOthers, yPos456, xPosOthers, height, boxOther2)
+        boxes=[box1, box2, box3, box4, box5, box6, boxOther1, boxOther2]
 
         #seeing if it got clicked and setting what the ending goal is
         check=checkClicks(boxes)
-        if check!=[]:
+        if len(check)==2:
             endingScenario=check
-            print(endingScenario)
             running=False
-
+        elif len(check)==1:
+            endingScenario=findOther(check)
+            running=False
 
         #displaying the text
         toScreen("Please choose when you want the game to end", font37, BLACK, WIDTH//2, 30)
         toScreen("After a certain length of time:", font30, BLACK, WIDTH//2, 110)
         toScreen("After someone reaches a certain number of points:", font30, BLACK, WIDTH//2, 360)
+        
         #each button
         textColour=BLACK
         toScreen("1 Minute", font30, textColour, xPos1And4+width//2, yPos123+height//2)
@@ -622,7 +793,8 @@ def getEndVariables():
         toScreen("3 Points", font30, textColour, xPos1And4+width//2, yPos456+height//2)
         toScreen("5 Points", font30, textColour, xPos2And5+width//2, yPos456+height//2)
         toScreen("10 points", font30, textColour, xPos3And6+width//2, yPos456+height//2)
-
+        toScreen2("Other", "time", font30, textColour, xPosOthers+otherWidth//2, yPos123+height//2)
+        toScreen2("Other", "points", font30, textColour, xPosOthers+otherWidth//2, yPos456+height//2)
 
         #displaying
         pygame.display.flip()
@@ -639,14 +811,13 @@ def outro(screenSurface, p1Points, p2Points):
     restartRect=(WIDTH//2-55, HEIGHT//2-55, 110,110)
     rectX, rectY, rectWidth, rectHeight=WIDTH-133,10,120,50
     quitRect=(rectX, rectY, rectWidth, rectHeight)
-    colours=[BLUE, LIGHTISH_BLUE, RED, LIGHT_RED]
+    colours=[BLUE, DARK_BLUE, RED, DARK_RED]
     restartColour=0
     quitColour=2
 
     #sprite stuff
-    #sprite group
     sprites=pygame.sprite.Group()
-    #button
+    #restarting button
     button=Reload(100,100,WIDTH//2-50, 475)
     sprites.add(button)
     confettis=[]
@@ -669,8 +840,6 @@ def outro(screenSurface, p1Points, p2Points):
         #showing score
         toScreen("Player 1: "+str(p1Points), font20, PURPLE, 100, 20)
         toScreen("Player 2: "+str(p2Points), font20, PURPLE, 250, 20)
-        #toScreen("Player 3: "+str(p3Points), font20, GREEN, WIDTH-250, 20)
-        #toScreen("Player 4: "+str(p4Points), font20, GREEN, WIDTH-100, 20)
 
         #showing who won
         if p1Points>p2Points:
@@ -719,13 +888,12 @@ def main():
     global gameRunning
 
     #running intro
+    #findOther([0])
     intro(screen)
-    outro(screen,0,0)
     #getting the number of followers
     numFollowers=getNumFollowers()
     #getting the ending scenario
     endingScenario=getEndVariables()
-
 
     paddleWidth=10
     #actually creating the sprites
@@ -737,8 +905,8 @@ def main():
 
     #having a small trail of balls behind to look cool
     colours=[RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE, MAGENTA]
+
     #seeing the past locations
-    
     pastLocationsX=[]
     pastLocationsY=[]
     for i in range(0, numFollowers):
@@ -753,7 +921,7 @@ def main():
         for i in range(1,numFollowers+1):
             balls.append(Ball(WIDTH//2, HEIGHT//2, 7-i*(numFollowers/7), 7, colours[i%7]))
 
-    #More variable stuff
+    #More variable stuff for having a cooldown and the following balls
     allowedNumbers={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29}
     time=0
     timesHit=[]
@@ -763,12 +931,13 @@ def main():
 
     #list of players
     playerList=[player1, player2, player3, player4]
-    #parameters for the players
+    #settings for the players
     player1Score, player2Score, player3Score, player4Score=0,0,0,0
     player1YDirect, player2YDirect, player3XDirect, player4XDirect=0,0,0,0
 
 
     #having it loop until it stops
+    #PLAYING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
     while running and gameRunning:
         time+=1
         #drawing background
@@ -834,11 +1003,6 @@ def main():
                 #stopping it from getting stuck and doing something fun
                 timesHit[time%coolDownTime]=1
 
-            #powers
-            #if timesHit.count(1)>3:
-                #timesHit=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-                #power(ball, player, playerList)
-
         #checking ball for bouncing on top or bottom
         if ball.posY<=0 or ball.posY>=HEIGHT:
             ball.hitV()
@@ -848,7 +1012,6 @@ def main():
         player2.updateY(player2YDirect)
         player3.updateX(player3XDirect)
         player4.updateX(player4XDirect)
-
 
         #having the balls actually follow
         for i in range(0,len(balls)):
@@ -897,8 +1060,6 @@ def main():
         pygame.draw.rect(screen, BLACK, player2.playerRect, 3)
         pygame.draw.rect(screen, BLACK, player3.playerRect, 3)
         pygame.draw.rect(screen, BLACK, player4.playerRect, 3)
-
-
         
         #getting it to end when they want it to
         #time
@@ -946,9 +1107,8 @@ def main():
                     pastLocationsY.append(0)
 
 
-
-
 #stuff?
 if __name__=="__main__":
     main()
     pygame.quit()
+    
