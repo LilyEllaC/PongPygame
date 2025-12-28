@@ -1,16 +1,19 @@
 import random
 import pygame
+import asyncio
 # pylint: disable=no-member
 
 pygame.init()
 #get fonts
-font15=pygame.font.Font('freesansbold.ttf', 15)
-font20=pygame.font.Font('freesansbold.ttf', 20)
-font25=pygame.font.Font('freesansbold.ttf', 25)
-font30=pygame.font.Font('freesansbold.ttf', 30)
-font37=pygame.font.Font('freesansbold.ttf', 37)
-font40=pygame.font.Font('freesansbold.ttf', 40)
-font200=pygame.font.Font('freesansbold.ttf', 200)
+print(pygame.font.get_fonts())
+fontType='freesansbold.ttf'
+font15=pygame.font.Font(fontType, 15)
+font20=pygame.font.Font(fontType, 20)
+font25=pygame.font.Font(fontType, 25)
+font30=pygame.font.Font(fontType, 30)
+font37=pygame.font.Font(fontType, 37)
+font40=pygame.font.Font(fontType, 40)
+font200=pygame.font.Font(fontType, 200)
 
 #setting colours
 RED=(255,0,0)
@@ -417,7 +420,7 @@ def checkClicks(boxes):
     return endingScenario
 
 #double checking that they are sure of their answer
-def doubleCheck(endScenario):
+async def doubleCheck(endScenario):
     global gameRunning
     running=True
     box=(WIDTH//2-300, HEIGHT//2-200, 600, 400)
@@ -461,6 +464,8 @@ def doubleCheck(endScenario):
         #loading
         clock.tick(FPS)
         pygame.display.flip()
+        await asyncio.sleep(0)  # Very important, and keep it 0
+
     return keep
 
 #drawing the yes and no buttons
@@ -472,7 +477,7 @@ def drawTextSqauare(colours, colour, text, location):
     return colour
 
 #other end parameter
-def findOther(endingScenario):
+async def findOther(endingScenario):
     global gameRunning
     running=True
     rect=(WIDTH//2-50, HEIGHT-110, 100, 100)
@@ -539,7 +544,7 @@ def findOther(endingScenario):
         #checking if they are sure for weird answers
         if len(endingScenario)==2:
             if ((endingScenario[0]==1 and endingScenario[1]>20) or (endingScenario[0]==0 and int(endGoal)>10)) and clicked:
-                if doubleCheck(endingScenario):
+                if await doubleCheck(endingScenario):
                     running=False
                 else:
                     endingScenario.pop(1)
@@ -549,11 +554,13 @@ def findOther(endingScenario):
 
         #displaying
         pygame.display.flip()
-        clock.tick(FPS)    
+        clock.tick(FPS)
+        await asyncio.sleep(0)  # Very important, and keep it 0
+    
     return endingScenario
 
 #having an intro screen
-def intro(screenSurface):
+async def intro(screenSurface):
     global gameRunning
     playing=False
     colour=RED
@@ -602,9 +609,10 @@ def intro(screenSurface):
 
         #updating the board image
         pygame.display.flip()
+        await asyncio.sleep(0)  # Very important, and keep it 0
 
 #typing!
-def getNumFollowers():
+async def getNumFollowers():
     numFollowers=""
     running=True
     global gameRunning
@@ -676,11 +684,13 @@ def getNumFollowers():
         toScreen("(Optional)", font25, BLUE, WIDTH//2+110,50)
         toScreen("Please enter the number of mini balls you want following the main ball.", font25, MAGENTA, WIDTH//2, HEIGHT//2-100)
         toScreen("These balls don't do anything, they just look really cool.", font25, MAGENTA, WIDTH//2, HEIGHT//2-70)
-        toScreen("It can be any number, but it looks the best between 30 and 70. (upwards of 200 is weird, but still fun)", font15, MAGENTA, WIDTH//2, HEIGHT//2-50)
+        toScreen("It can be any number, but it looks the best between 30 and 70. (upwards of 200 is weird, but still fun)", font15, MAGENTA, WIDTH//2, HEIGHT//2-47)
 
         toScreen(numFollowers, font25, RED, WIDTH//2, HEIGHT//2)
         pygame.display.flip()
         clock.tick(FPS)
+        await asyncio.sleep(0)  # Very important, and keep it 0
+
 
     #continuing (deleting to save memory)
     balls.clear()
@@ -690,7 +700,7 @@ def getNumFollowers():
     return int(numFollowers)
 
 #getting the way the game ends
-def getEndVariables():
+async def getEndVariables():
     running=True
     global gameRunning
     endingScenario=[]
@@ -777,7 +787,7 @@ def getEndVariables():
             endingScenario=check
             running=False
         elif len(check)==1:
-            endingScenario=findOther(check)
+            endingScenario=await findOther(check)
             running=False
 
         #displaying the text
@@ -799,12 +809,14 @@ def getEndVariables():
         #displaying
         pygame.display.flip()
         clock.tick(FPS)
+        await asyncio.sleep(0)  # Very important, and keep it 0
+
 
     #returning answer
     return endingScenario
 
 #having an ending scene
-def outro(screenSurface, p1Points, p2Points):
+async def outro(screenSurface, p1Points, p2Points):
     global gameRunning
     replaying=False
     #stuff ofr the buttons
@@ -878,22 +890,24 @@ def outro(screenSurface, p1Points, p2Points):
         sprites.draw(screen)
 
         pygame.display.flip()
+        await asyncio.sleep(0)  # Very important, and keep it 0
+
         clock.tick(FPS)
     return replaying
 
 #actual game part
-def main():
+async def main():
     #Having the game actually play
     running=True
     global gameRunning
 
     #running intro
     #findOther([0])
-    intro(screen)
+    await intro(screen)
     #getting the number of followers
-    numFollowers=getNumFollowers()
+    numFollowers= await getNumFollowers()
     #getting the ending scenario
-    endingScenario=getEndVariables()
+    endingScenario= await getEndVariables()
 
     paddleWidth=10
     #actually creating the sprites
@@ -1080,13 +1094,15 @@ def main():
         #updating the screen
         pygame.display.update()
         pygame.display.flip()
+        await asyncio.sleep(0)  # Very important, and keep it 0
+
 
         #frame rate
         clock.tick(FPS)
 
         #stopping 
         if ending:
-            running=outro(screen, player1Score, player2Score)
+            running= await outro(screen, player1Score, player2Score)
             #resetting variables
             if running:
                 for i in range(0, numFollowers):
@@ -1105,10 +1121,11 @@ def main():
                 for i in range(0, numFollowers):
                     pastLocationsX.append(0)
                     pastLocationsY.append(0)
-
+        await asyncio.sleep(0)  # probably important, and keep it 0
 
 #stuff?
 if __name__=="__main__":
-    main()
+    asyncio.run(main())
+
     pygame.quit()
     
