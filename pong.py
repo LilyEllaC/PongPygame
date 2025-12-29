@@ -5,7 +5,6 @@ import asyncio
 
 pygame.init()
 #get fonts
-print(pygame.font.get_fonts())
 fontType='freesansbold.ttf'
 font15=pygame.font.Font(fontType, 15)
 font20=pygame.font.Font(fontType, 20)
@@ -582,7 +581,7 @@ async def intro(screenSurface):
         toScreen("This is a 2 player game of pong where the ball gets faster everytime",font25,GRAY,WIDTH//2, 200)
         toScreen("it gets hit until a point is scored. A point gets scored when the ball ", font25, GRAY, WIDTH//2, 226)
         toScreen("hits either the left or right wall.", font25, GRAY, WIDTH//2, 251)
-        toScreen("Use the w and s keys for the left paddle, and the up and down keys for the right paddle", font25, GRAY, WIDTH//2, 277)
+        toScreen("W and S keys move the left one, and up and down keys move the right one", font25, GRAY, WIDTH//2, 277)
         toScreen("The top and bottom paddles are just for helping score points.", font25, GRAY, WIDTH//2, 303)
         toScreen("Use the a and d keys for the top paddle (left player)", font25, GRAY, WIDTH//2, 328)
         toScreen("and the left and right keys for the bottom paddle (right player)", font25, GRAY, WIDTH//2, 354)

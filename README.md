@@ -6,13 +6,23 @@ A 2 player game of pong with fun visuals and a bonus of there being two paddles 
 *   **Fun visuals** A bright and colourful game with a rainbow trail of balls following the main one
 *   **Changable game lengths** Choose between going for 1, 2, or 3 minutes or until someone reaches 3, 5, or 10 points
 
+## Playing
+*   Visit the itch.io page at https://lilyec.itch.io/pong to play the game
+
 ## Installation
 this assumes you have python installed, a venv is recommended, but not required.
-*   git checkout
-install library/dependencies e.g
+
+### to setup a virtual enviornment
+python -m venv .venv
+
+source /.venv/bin/activate
+
+*   git checkout https://github.com/LilyEllaC/PongPygame.git
+### install library/dependencies e.g
 
 pip install -r requirements.txt
 python pong.py
+
 ## How to play
 
 *   Read the instructions at the start of the program
@@ -23,5 +33,3 @@ python pong.py
 *   Game ends when the chosen parameters for ending are achieved
 
 ![Image of the game being played with 50 trailing balls](./example.png)
-
-## Building from source
